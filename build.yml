@@ -1,0 +1,44 @@
+name: Build VST3
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build VST3
+        run: cmake --build build --config Release --target CTS2000_VST3 --parallel
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Copy-Item -Recurse "build/CTS2000_artefacts/Release/VST3/CTS2000.vst3" "dist/CTS2000.vst3"
+          Copy-Item "Install-Windows.bat" "dist/Install-Windows.bat"
+          Copy-Item "README.md" "dist/README.md"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CTS2000-VST3-Windows
+          path: dist
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+      - name: Build VST3
+        run: cmake --build build --config Release --target CTS2000_VST3 --parallel
+      - name: Package
+        run: |
+          mkdir dist
+          cp -R "build/CTS2000_artefacts/Release/VST3/CTS2000.vst3" dist/
+          cp README.md dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CTS2000-VST3-macOS
+          path: dist
